@@ -239,6 +239,7 @@ requirejs(["tiles-unitegallery"], function(util) {
     requirejs(["%(theme_js_url)s"], function(util) {
         (function($){
             $(document).ready(function() {
+                if ($(body).hasClass('template-edit')) return;
                 $("#gallery-%(uid)s").each(function(){
                         $(this).unitegallery({
                             %(gallery_theme)s

@@ -81,6 +81,12 @@ class IUnitegalleryTile(model.Schema):
             SimpleTerm('default', 'default', _(u"label_default", default=u"Default")),
             SimpleTerm('alexis', 'alexis', _(u"label_alexis", default=u"Alexis")),
         ]))
+    gallery_play_interval = schema.Int(
+        title=_(u"gallery_play_interval_title", default=u"Play interval of the slideshow"),
+        default=3000)
+    gallery_pause_on_mouseover = schema.Bool(
+        title=_(u"gallery_pause_on_mouseover_title", default=u"Pause on mouseover when playing slideshow"),
+        default=True)
     gallery_width = schema.TextLine(
         title=_(u"gallery_width_title", default=u"Gallery width"),
         default=u'100%')
@@ -102,6 +108,9 @@ class IUnitegalleryTile(model.Schema):
             SimpleTerm('visible', 'visible', _(u"label_visible", default=u"Visible")),
             SimpleTerm('all', 'all', _(u"label_all", default=u"All")),
         ]))
+    gallery_control_thumbs_mousewheel = schema.Bool(
+        title=_(u"gallery_control_thumbs_mousewheel_title", default=u"Enable / disable the mousewheel"),
+        default=False)
 
     tiles_type = schema.Choice(
         title=_(u"tiles_type_title", default=u"Must option for the tiles"),
@@ -115,6 +124,20 @@ class IUnitegalleryTile(model.Schema):
     tile_enable_textpanel = schema.Bool(
         title=_(u"tile_enable_textpanel_title", default=u"Enable textpanel"),
         default=False)
+    
+    slider_transition = schema.Choice(
+        title=_(u"slider_transition_title", default=u"Transition of the slide change"),
+        default=u'slide',
+        vocabulary=SimpleVocabulary([
+            SimpleTerm('fade', 'fade', _(u"label_fade", default=u"Fade")),
+            SimpleTerm('slide', 'slide', _(u"label_slide", default=u"Slide")),
+        ]))
+    slider_transition_speed = schema.Int(
+        title=_(u"slider_transition_speed_title", default=u"Transition duration of slide change"),
+        default=300)
+    slider_control_zoom = schema.Bool(
+        title=_(u"slider_control_zoom_title", default=u"enable zooming control"),
+        default=True)
 
 
 @implementer(IValue)
@@ -134,6 +157,8 @@ def jsbool(val):
 
 class UnitegalleryTile(Tile):
     """Unite Gallery Tile"""
+
+    slidertypes = ['default', 'compact', 'grid', 'slider']
 
     def getUID(self):
         return self.request.get('URL').split('/')[-1]
@@ -197,14 +222,14 @@ class UnitegalleryTile(Tile):
     @property
     def gallery_height(self):
         height = ''
-        if self.theme in ['default', 'compact', 'grid', 'slicer']:
+        if self.theme in self.slidertypes:
             height = self.data.get('gallery_height', '500')
             try:
                 height = str(int(height))
             except:
                 height = '"'+height+'"'
             return 'gallery_height: '+height+','
-        return height
+        return ''
 
 
     @property
@@ -222,26 +247,35 @@ class UnitegalleryTile(Tile):
     @property
     def gallery_min_height(self):
         height = ''
-        if self.theme in ['default', 'compact', 'grid', 'slicer']:
+        if self.theme in self.slidertypes:
             height = self.data.get('gallery_min_height', '500')
             try:
                 height = str(int(height))
             except:
                 height = '"'+height+'"'
             return 'gallery_min_height: '+height+','
-        return height 
+        return height
+    
+    @property
+    def slider_transition_speed(self):
+        speed = ''
+        if self.theme in self.slidertypes:
+            speed = str(self.data.get('slider_transition_speed', 500))
+            return 'slider_transition_speed: '+speed+','
+        return speed
     
     def script(self):
         theme = self.data.get('gallery_theme', 'default')
         return """
 <script type="text/javascript">
+var gallery%(uid)s;
 requirejs(["tiles-unitegallery"], function(util) {
     requirejs(["%(theme_js_url)s"], function(util) {
         (function($){
             $(document).ready(function() {
                 if ($('body').hasClass('template-edit')) return;
-                $("#gallery-%(uid)s").each(function(){
-                        $(this).unitegallery({
+                $("#gallery%(uid)s").each(function(){
+                    gallery%(uid)s = $(this).unitegallery({
                             %(gallery_theme)s
                             %(tiles_type)s
                             %(gallery_width)s
@@ -250,7 +284,12 @@ requirejs(["tiles-unitegallery"], function(util) {
                             %(gallery_min_height)s
                             %(gallery_min_width)s
                             %(gallery_images_preload_type)s
+                            %(gallery_control_thumbs_mousewheel)s
+                            %(gallery_pause_on_mouseover)s
                             %(tile_enable_textpanel)s
+                            %(slider_transition)s
+                            %(slider_transition_speed)s
+                            %(slider_control_zoom)s
                         });
 			        });
 			    });
@@ -266,7 +305,12 @@ requirejs(["tiles-unitegallery"], function(util) {
        'gallery_height':self.gallery_height,
        'gallery_min_width':self.gallery_min_width,
        'gallery_min_height':self.gallery_min_height,
-       'gallery_images_preload_type':self.theme in ['default', 'compact', 'grid','slider'] and 'gallery_images_preload_type: "'+self.data.get('gallery_images_preload_type', 'minimal')+'",' or '',
+       'gallery_images_preload_type':self.theme in self.slidertypes and 'gallery_images_preload_type: "'+self.data.get('gallery_images_preload_type', 'minimal')+'",' or '',
+       'gallery_control_thumbs_mousewheel':self.theme in self.slidertypes and 'gallery_control_thumbs_mousewheel: '+jsbool(self.data.get('gallery_control_thumbs_mousewheel'))+',' or '',
+       'gallery_pause_on_mouseover':self.theme in self.slidertypes and 'gallery_pause_on_mouseover: '+jsbool(self.data.get('gallery_pause_on_mouseover'))+',' or '',
+       'slider_transition':self.theme in self.slidertypes and 'slider_transition: "'+str(self.data.get('slider_transition'))+'",' or '',
+       'slider_transition_speed':self.slider_transition_speed,
+       'slider_control_zoom':self.theme in self.slidertypes and 'slider_control_zoom: '+jsbool(self.data.get('slider_control_zoom'))+',' or '',
        'tile_enable_textpanel':self.theme in ['tiles', 'tilesgrid', 'carousel'] and 'tile_enable_textpanel: '+jsbool(self.data.get('tile_enable_textpanel', 'true'))+',' or '',
        }
 

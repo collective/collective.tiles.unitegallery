@@ -1,5 +1,9 @@
 Changelog
 =========
+1.0a4
+-----
+Fix break on load if folder content is not only images
+
 
 1.0a3
 -----

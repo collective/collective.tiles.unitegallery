@@ -9,7 +9,7 @@ from zope.schema.vocabulary import SimpleVocabulary, SimpleTerm
 from z3c.form.interfaces import IValue
 from z3c.form.util import getSpecification
 from Products.Five.browser.pagetemplatefile import ViewPageTemplateFile
-from zope.component import queryUtility, getMultiAdapter
+from zope.component import queryUtility, getMultiAdapter, queryMultiAdapter
 from zope.publisher.browser import BrowserView
 from zope.schema import getFields
 from zope import schema
@@ -437,11 +437,16 @@ requirejs(["tiles-unitegallery"], function(util) {
         out = []
         for item in self.contents():
             img = item.getObject()
-            image = getMultiAdapter((img, self.request), name='images')
+            image = queryMultiAdapter((img, self.request), name='images', default=None)
+            if not image:
+                continue
             data = {'data-title':item.Title().decode('utf-8'),
                     'data-description':item.Description().decode('utf-8'),
                     'data-image':item.getURL()}
-            tag = image.tag(scale='preview')[:-2]
+            try:
+                tag = image.tag(scale='preview')[:-2]
+            except:
+                continue
             for key, value in sorted(data.items()):
                 if value:
                     tag = '%s %s="%s"' % (tag, key, value)

@@ -4,14 +4,8 @@
 </head>
 <body tal:define="uid view/getUID">
 <div id="gallery" class="unitegallery-container" tal:attributes="id string:gallery${uid}">
-    <tal:images tal:repeat="img view/contents">
-        <img title="Image"
-             tal:attributes="title img/Title;
-                             alt img/Description;
-                             src string:${img/getURL}/@@images/image/preview;
-                             data-title img/Title;
-                             data-description img/Description;
-                             data-image img/getURL"/>
+    <tal:images tal:repeat="img view/tags">
+        <img tal:replace="structure img"/>
     </tal:images>
 </div>
 </body>

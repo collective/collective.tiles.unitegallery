@@ -3,6 +3,7 @@ from plone.app.z3cform.widget import QueryStringFieldWidget
 from plone.autoform.directives import widget
 from zope.interface import implementer
 from zope.component import adapter
+from plone.app.imaging.interfaces import IImageScaling
 from plone.supermodel import model
 from zope.schema.vocabulary import SimpleVocabulary, SimpleTerm
 from z3c.form.interfaces import IValue
@@ -120,6 +121,11 @@ class IUnitegalleryTile(model.Schema):
             SimpleTerm('justified', 'justified', _(u"label_justified", default=u"Justified")),
             SimpleTerm('nested', 'nested', _(u"label_nested", default=u"Nested")),
         ]))
+
+    tiles_type_windowswitch = schema.Int(
+        title=_(u"tiles_type_windowswitch_title", default=u"Window width to swith between columns and nested"),
+        description=_(u"tiles_type_windowswitch_description", default=u"Gallery will be loaded as justified if window width is less than this value."),
+        default=0)
 
     tile_enable_textpanel = schema.Bool(
         title=_(u"tile_enable_textpanel_title", default=u"Enable textpanel"),
@@ -263,6 +269,22 @@ class UnitegalleryTile(Tile):
             speed = str(self.data.get('slider_transition_speed', 500))
             return 'slider_transition_speed: '+speed+','
         return speed
+
+    @property
+    def tiles_type_var(self):
+        if not self.theme == 'tiles':
+            return '""'
+        tiles_type = self.data.get('tiles_type', 'columns')
+        if self.data.get('tiles_type_windowswitch'):
+            windowswitch = str(self.data.get('tiles_type_windowswitch'))
+            return '$(window).width() < '+windowswitch+' ? "justified" : "'+self.data.get('tiles_type', 'columns')+'"'
+        return '"'+tiles_type+'"'
+
+    @property
+    def tiles_type(self):
+        if not self.theme == 'tiles':
+            return ''
+        return 'tiles_type: tiles_type,'
     
     def script(self):
         theme = self.data.get('gallery_theme', 'default')
@@ -275,9 +297,11 @@ requirejs(["tiles-unitegallery"], function(util) {
             $(document).ready(function() {
                 if ($('body').hasClass('template-edit')) return;
                 $("#gallery%(uid)s").each(function(){
+                    var tiles_type = %(tiles_type_var)s;
                     gallery%(uid)s = $(this).unitegallery({
                             %(gallery_theme)s
                             %(tiles_type)s
+                            %(gallery_play_interval)s
                             %(gallery_width)s
                             %(gallery_height)s
                             %(gallery_min_width)s
@@ -300,7 +324,9 @@ requirejs(["tiles-unitegallery"], function(util) {
 """ % {'uid':self.getUID(),
        'theme_js_url':self.theme_js_url(),
        'gallery_theme':self.theme != 'default' and 'gallery_theme: "'+self.theme+'",' or '',
-       'tiles_type':self.theme == 'tiles' and 'tiles_type: "'+self.data.get('tiles_type', 'columns')+'",' or '',
+       'tiles_type':self.tiles_type,
+       'tiles_type_var':self.tiles_type_var,
+       'gallery_play_interval':self.theme in self.slidertypes and 'gallery_play_interval: '+str(self.data.get('gallery_play_interval'))+',' or '',
        'gallery_width':self.gallery_width,
        'gallery_height':self.gallery_height,
        'gallery_min_width':self.gallery_min_width,
@@ -313,6 +339,57 @@ requirejs(["tiles-unitegallery"], function(util) {
        'slider_control_zoom':self.theme in self.slidertypes and 'slider_control_zoom: '+jsbool(self.data.get('slider_control_zoom'))+',' or '',
        'tile_enable_textpanel':self.theme in ['tiles', 'tilesgrid', 'carousel'] and 'tile_enable_textpanel: '+jsbool(self.data.get('tile_enable_textpanel', 'true'))+',' or '',
        }
+
+
+    def tag(self, img, fieldname=None, scale=None, height=None, width=None,
+            css_class=None, direction='keep', data={}, **args):
+
+        if scale is not None:
+            available = self.getAvailableSizes(fieldname)
+            if scale not in available:
+                return None
+            width, height = available[scale]
+
+        if width is None and height is None:
+            field = self.field(fieldname)
+            return field.tag(
+                self.context, css_class=css_class, **args
+            )
+
+        info = self.getInfo(
+            fieldname=fieldname, scale=scale,
+            height=height, width=width,
+            direction=direction,
+        )
+
+        width = info['width']
+        height = info['height']
+        mimetype = info['mimetype']
+        extension = mimetype.split('/')[-1]
+
+        url = self.context.absolute_url()
+        src = '%s/@@images/%s.%s' % (url, info['uid'], extension)
+        result = '<img src="%s"' % src
+
+        if height:
+            result = '%s height="%s"' % (result, height)
+
+        if width:
+            result = '%s width="%s"' % (result, width)
+
+        if css_class is not None:
+            result = '%s class="%s"' % (result, css_class)
+
+        if data:
+            for key, value in sorted(data.items()):
+                if value:
+                    result = '%s %s="%s"' % (result, key, value)
+        if args:
+            for key, value in sorted(args.items()):
+                if value:
+                    result = '%s %s="%s"' % (result, key, value)
+
+        return '%s />' % result
 
     def contents(self):
         self.query = self.data.get('query')
@@ -356,4 +433,19 @@ requirejs(["tiles-unitegallery"], function(util) {
         )
         return accessor
 
+    def tags(self):
+        out = []
+        for item in self.contents():
+            img = item.getObject()
+            image = getMultiAdapter((img, self.request), name='images')
+            data = {'data-title':item.Title().decode('utf-8'),
+                    'data-description':item.Description().decode('utf-8'),
+                    'data-image':item.getURL()}
+            tag = image.tag(scale='preview')[:-2]
+            for key, value in sorted(data.items()):
+                if value:
+                    tag = '%s %s="%s"' % (tag, key, value)
+            tag = '%s />' % tag
+            out.append(tag)
+        return out
 

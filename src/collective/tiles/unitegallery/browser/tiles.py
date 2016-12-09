@@ -90,10 +90,12 @@ class IUnitegalleryTile(model.Schema):
         default=True)
     gallery_width = schema.TextLine(
         title=_(u"gallery_width_title", default=u"Gallery width"),
-        default=u'100%')
+        default=u'100%',
+        required=False)
     gallery_height = schema.Int(
         title=_(u"gallery_height_title", default=u"Gallery height"),
-        default=500)
+        default=500,
+        required=False)
     gallery_min_width = schema.Int(
         title=_(u"gallery_min_width_title", default=u"Gallery minimal width when resizing"),
         default=400)
@@ -217,7 +219,9 @@ class UnitegalleryTile(Tile):
     def gallery_width(self):
         width = ''
         if self.theme != 'video':
-            width = self.data.get('gallery_width', '100%')
+            width = self.data.get('gallery_width', '')
+            if not width:
+                return ''
             try:
                 width = str(int(width))
             except:
@@ -229,7 +233,9 @@ class UnitegalleryTile(Tile):
     def gallery_height(self):
         height = ''
         if self.theme in self.slidertypes:
-            height = self.data.get('gallery_height', '500')
+            height = self.data.get('gallery_height', '')
+            if not height:
+                return ''
             try:
                 height = str(int(height))
             except:
@@ -306,7 +312,6 @@ requirejs(["tiles-unitegallery"], function(util) {
                             %(gallery_height)s
                             %(gallery_min_width)s
                             %(gallery_min_height)s
-                            %(gallery_min_width)s
                             %(gallery_images_preload_type)s
                             %(gallery_control_thumbs_mousewheel)s
                             %(gallery_pause_on_mouseover)s

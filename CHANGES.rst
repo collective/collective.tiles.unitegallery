@@ -1,5 +1,11 @@
 Changelog
 =========
+1.0a5
+-----
+Fix wronf requirejs
+Depends on collective.js.unitegallery
+
+
 1.0a4
 -----
 Fix break on load if folder content is not only images

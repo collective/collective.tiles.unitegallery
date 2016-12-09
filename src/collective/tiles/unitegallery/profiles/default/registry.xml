@@ -25,21 +25,4 @@
     </value>
   </records>
 
-  <records prefix="plone.bundles/tiles-unitegallery"
-           interface='Products.CMFPlone.interfaces.IBundleRegistry'>
-    <value key="resources" purge="false">
-      <element>tiles-unitegallery</element>
-    </value>
-    <value key="jscompilation">++resource++collective.tiles.unitegallery/js/tiles-unitegallery-compiled.js</value>
-    <value key="csscompilation">++resource++collective.tiles.unitegallery/css/unite-gallery.css</value>
-    <value key="last_compilation">2016-11-29 00:00:00</value>
-    <value key="compile">True</value>
-    <value key="enabled">True</value>
-    <value key="expression"></value>
-    <value key="depends">plone</value>
-    <value key="stub_js_modules">
-      <element>jquery</element>
-    </value>
-  </records>
-
 </registry>

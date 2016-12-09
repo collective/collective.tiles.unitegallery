@@ -169,6 +169,16 @@ class UnitegalleryTile(Tile):
     """Unite Gallery Tile"""
 
     slidertypes = ['default', 'compact', 'grid', 'slider']
+    staticFilesRelative = '++resource++collective.tiles.unitegallery'
+
+    def __init__(self, context, request):
+        super(UnitegalleryTile, self).__init__(context, request)
+        portal_state = getMultiAdapter((context, request),
+                                        name='plone_portal_state')
+        self.portal_url = portal_state.portal_url()
+        self.staticFiles = "%s/%s" % (self.portal_url,
+                                      self.staticFilesRelative)
+
 
     def getUID(self):
         return self.request.get('URL').split('/')[-1]
@@ -181,41 +191,7 @@ class UnitegalleryTile(Tile):
         return theme
 
     def theme_js_url(self):
-        return '++resource++ptg.unitegallery/themes/'+self.theme+'/ug-theme-'+self.theme+'.js'
-
-    def theme_css(self):
-        if self.theme != 'default':
-            return ''
-        return """
-<link rel="stylesheet" type="text/css"
-    href="++resource++ptg.unitegallery/themes/%(theme)s/ug-theme-%(theme)s.css" media="screen" />
-""" % {
-    'theme':self.theme,
-    }
-        
-    def skin_css(self):
-        skin = self.data.get('gallery_skin', 'default')
-        if skin == 'default':
-            return ''
-        return """
-<link rel="stylesheet" type="text/css"
-    href="++resource++ptg.unitegallery/skins/%(skin)s/%(skin)s.css" media="screen" />
-""" % {
-    'skin':skin,
-    }
-
-    def css(self):
-        return u"""
-<link rel="stylesheet" type="text/css"
-    href="%(base_url)s/css/unite-gallery.css" media="screen" />
-%(theme_css)s
-%(skin_css)s
-""" % {
-        'staticFiles': self.staticFiles,
-        'base_url': self.typeStaticFiles,
-        'theme_css' : self.theme_css(),
-        'skin_css' : self.skin_css(),
-        }
+        return self.staticFilesRelative+'/themes/'+self.theme+'/ug-theme-'+self.theme+'.js'
 
     @property
     def gallery_width(self):
@@ -303,9 +279,7 @@ class UnitegalleryTile(Tile):
         return """
 <script type="text/javascript">
 var gallery%(uid)s;
-requirejs(["tiles-unitegallery"], function(util) {
-    requirejs(["%(theme_js_url)s"], function(util) {
-        (function($){
+    requirejs(["unitegallery-%(theme)s"], function(util) {
             $(document).ready(function() {
                 if ($('body').hasClass('template-edit')) return;
                 $("#gallery%(uid)s").each(function(){
@@ -328,11 +302,11 @@ requirejs(["tiles-unitegallery"], function(util) {
                         });
 			        });
 			    });
-        })(jQuery);
     });
-});
 </script>
 """ % {'uid':self.getUID(),
+       'base_url': self.staticFiles,
+       'theme':self.theme,
        'theme_js_url':self.theme_js_url(),
        'gallery_theme':self.theme != 'default' and 'gallery_theme: "'+self.theme+'",' or '',
        'tiles_type':self.tiles_type,

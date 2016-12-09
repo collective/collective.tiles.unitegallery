@@ -52,6 +52,7 @@ setup(
             'plone.testing>=5.0.0',
             'plone.app.contenttypes',
             'plone.app.mosaic',
+            'collective.js.unitegallery',
             'plone.app.robotframework[debug]',
         ],
     },

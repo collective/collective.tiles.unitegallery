@@ -98,10 +98,12 @@ class IUnitegalleryTile(model.Schema):
         required=False)
     gallery_min_width = schema.Int(
         title=_(u"gallery_min_width_title", default=u"Gallery minimal width when resizing"),
-        default=400)
+        default=400,
+        required=False)
     gallery_min_height = schema.Int(
         title=_(u"gallery_min_height_title", default=u"Gallery minimal height when resizing"),
-        default=300)
+        default=300,
+        required=False)
     gallery_images_preload_type = schema.Choice(
         title=_(u"gallery_images_preload_type_title", default=u"Preload type of the images"),
         description=_(u"gallery_images_preload_type_description", default=u"Minimal - only image nabours will be loaded each time.\nVisible - visible thumbs images will be loaded each time.\nAll - load all the images first time."),
@@ -248,7 +250,9 @@ class UnitegalleryTile(Tile):
     def gallery_min_width(self):
         width = ''
         if self.theme != 'video':
-            width = self.data.get('gallery_min_width', '900')
+            width = self.data.get('gallery_min_width', '')
+            if not width:
+                return ''
             try:
                 width = str(int(width))
             except:
@@ -260,7 +264,9 @@ class UnitegalleryTile(Tile):
     def gallery_min_height(self):
         height = ''
         if self.theme in self.slidertypes:
-            height = self.data.get('gallery_min_height', '500')
+            height = self.data.get('gallery_min_height', '')
+            if not height:
+                return ''
             try:
                 height = str(int(height))
             except:

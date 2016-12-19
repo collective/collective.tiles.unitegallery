@@ -319,7 +319,7 @@ requirejs(["unitegallery-%(theme)s"], function(util) {
         if ($('body').hasClass('template-edit')) return;
         $("#gallery%(uid)s").each(function(){
             var tiles_type = %(tiles_type_var)s;
-            gallery%(uid)s = $(this).off('touchstart').unitegallery({
+            gallery%(uid)s = $(this).unitegallery({
                 %(gallery_theme)s
                 %(tiles_type)s
                 %(gallery_play_interval)s
@@ -335,6 +335,7 @@ requirejs(["unitegallery-%(theme)s"], function(util) {
                 %(slider_transition_speed)s
                 %(slider_control_zoom)s
             });
+            $(this).off('touchstart');
         });
     });
 });

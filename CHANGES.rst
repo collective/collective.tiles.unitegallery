@@ -1,8 +1,13 @@
 Changelog
 =========
+1.0a6
+-----
+- Reuse requirejs
+- Add gallery.off('touchstart') to fix scroll on mobiles
+
 1.0a5
 -----
-Fix wronf requirejs
+Fix wrong requirejs
 Depends on collective.js.unitegallery
 
 

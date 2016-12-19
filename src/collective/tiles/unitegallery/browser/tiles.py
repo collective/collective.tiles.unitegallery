@@ -273,36 +273,71 @@ class UnitegalleryTile(Tile):
         if not self.theme == 'tiles':
             return ''
         return 'tiles_type: tiles_type,'
-    
+
+    def theme_css(self):
+        if self.theme != 'default':
+            return ''
+        return """
+<link rel="stylesheet" type="text/css"
+    href="%(base_url)s/++resource++ptg.unitegallery/themes/%(theme)s/ug-theme-%(theme)s.css" media="screen" />
+""" % {
+    'base_url': self.staticFiles,
+    'theme':self.theme,
+    }
+
+    def skin_css(self):
+        skin = self.data.get('gallery_skin')
+        if skin == 'default':
+            return ''
+        return """
+<link rel="stylesheet" type="text/css"
+    href="%(base_url)s/++resource++ptg.unitegallery/skins/%(skin)s/%(skin)s.css" media="screen" />
+""" % {
+    'base_url': self.staticFiles,
+    'skin':skin,
+    }
+
+    def css(self):
+        return u"""
+<link rel="stylesheet" type="text/css"
+    href="%(staticFiles)s/css/unite-gallery.css" media="screen" />
+%(theme_css)s
+%(skin_css)s
+""" % {
+        'staticFiles': self.staticFiles,
+        'theme_css' : self.theme_css(),
+        'skin_css' : self.skin_css(),
+        }
+
     def script(self):
         theme = self.data.get('gallery_theme', 'default')
         return """
 <script type="text/javascript">
-var gallery%(uid)s;
-    requirejs(["unitegallery-%(theme)s"], function(util) {
-            $(document).ready(function() {
-                if ($('body').hasClass('template-edit')) return;
-                $("#gallery%(uid)s").each(function(){
-                    var tiles_type = %(tiles_type_var)s;
-                    gallery%(uid)s = $(this).unitegallery({
-                            %(gallery_theme)s
-                            %(tiles_type)s
-                            %(gallery_play_interval)s
-                            %(gallery_width)s
-                            %(gallery_height)s
-                            %(gallery_min_width)s
-                            %(gallery_min_height)s
-                            %(gallery_images_preload_type)s
-                            %(gallery_control_thumbs_mousewheel)s
-                            %(gallery_pause_on_mouseover)s
-                            %(tile_enable_textpanel)s
-                            %(slider_transition)s
-                            %(slider_transition_speed)s
-                            %(slider_control_zoom)s
-                        });
-			        });
-			    });
+requirejs(["unitegallery-%(theme)s"], function(util) {
+    var gallery%(uid)s;
+    $(document).ready(function() {
+        if ($('body').hasClass('template-edit')) return;
+        $("#gallery%(uid)s").each(function(){
+            var tiles_type = %(tiles_type_var)s;
+            gallery%(uid)s = $(this).off('touchstart').unitegallery({
+                %(gallery_theme)s
+                %(tiles_type)s
+                %(gallery_play_interval)s
+                %(gallery_width)s
+                %(gallery_height)s
+                %(gallery_min_width)s
+                %(gallery_min_height)s
+                %(gallery_images_preload_type)s
+                %(gallery_control_thumbs_mousewheel)s
+                %(gallery_pause_on_mouseover)s
+                %(tile_enable_textpanel)s
+                %(slider_transition)s
+                %(slider_transition_speed)s
+                %(slider_control_zoom)s
+            });
+        });
     });
+});
 </script>
 """ % {'uid':self.getUID(),
        'base_url': self.staticFiles,

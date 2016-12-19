@@ -14,7 +14,7 @@ long_description = '\n\n'.join([
 
 setup(
     name='collective.tiles.unitegallery',
-    version='1.0a6',
+    version='1.0a7',
     description="Unite Gallery for mosaic tiles in Plone",
     long_description=long_description,
     # Get more from https://pypi.python.org/pypi?%3Aaction=list_classifiers

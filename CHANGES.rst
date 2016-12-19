@@ -1,5 +1,9 @@
 Changelog
 =========
+1.0a7
+-----
+- Change .off('touchstart') position after gallery initialisation
+
 1.0a6
 -----
 - Reuse requirejs

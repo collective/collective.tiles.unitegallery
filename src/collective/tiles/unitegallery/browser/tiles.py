@@ -149,6 +149,14 @@ class IUnitegalleryTile(model.Schema):
         title=_(u"slider_control_zoom_title", default=u"enable zooming control"),
         default=True)
 
+    custom_options = schema.Dict(
+        title=_(u'Custom options'),
+        description=_(u"Add your own options here. Add the \"\" to the strings."),
+        key_type=schema.TextLine(title=u"name"),
+        value_type=schema.TextLine(title=u"value"),
+        missing_value={},
+        required=False)
+
 
 @implementer(IValue)
 @adapter(None, None, None, getSpecification(IUnitegalleryTile['query']), None)  # noqa
@@ -311,6 +319,9 @@ class UnitegalleryTile(Tile):
 
     def script(self):
         theme = self.data.get('gallery_theme', 'default')
+        custom_options = ''
+        if self.data.get('custom_options'):
+            custom_options = ',\n'.join([k.replace('"','')+':'+v for k,v in self.data.get('custom_options').items()])
         return """
 <script type="text/javascript">
 requirejs(["unitegallery-%(theme)s"], function(util) {
@@ -334,6 +345,7 @@ requirejs(["unitegallery-%(theme)s"], function(util) {
                 %(slider_transition)s
                 %(slider_transition_speed)s
                 %(slider_control_zoom)s
+                %(custom_options)s
             });
             $(this).off('touchstart');
         });
@@ -359,6 +371,7 @@ requirejs(["unitegallery-%(theme)s"], function(util) {
        'slider_transition_speed':self.slider_transition_speed,
        'slider_control_zoom':self.theme in self.slidertypes and 'slider_control_zoom: '+jsbool(self.data.get('slider_control_zoom'))+',' or '',
        'tile_enable_textpanel':self.theme in ['tiles', 'tilesgrid', 'carousel'] and 'tile_enable_textpanel: '+jsbool(self.data.get('tile_enable_textpanel', 'true'))+',' or '',
+       'custom_options':custom_options
        }
 
 

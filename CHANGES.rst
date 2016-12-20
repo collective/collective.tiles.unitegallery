@@ -1,5 +1,9 @@
 Changelog
 =========
+1.0b1 (unreleased)
+-----
+- Allow to set custom options (useful to introduce javascript in options like gallery_height:$(window).height()
+
 1.0a7
 -----
 - Change .off('touchstart') position after gallery initialisation
